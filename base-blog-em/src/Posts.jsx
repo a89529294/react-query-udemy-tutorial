@@ -18,7 +18,7 @@ export function Posts() {
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedPost, setSelectedPost] = useState(null);
 
-  const { data, isLoading, isError, error } = useQuery(
+  const { data, isLoading, isError, error, isFetching } = useQuery(
     ["posts", currentPage],
     () => fetchPosts(currentPage),
     {
@@ -41,6 +41,7 @@ export function Posts() {
         <p>{error.toString()}</p>
       </>
     );
+  if (isFetching) return <h3>fetching...</h3>;
 
   return (
     <>
