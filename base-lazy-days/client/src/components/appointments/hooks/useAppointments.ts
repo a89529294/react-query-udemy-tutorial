@@ -1,9 +1,11 @@
 // @ts-nocheck
 import dayjs from 'dayjs';
-import { Dispatch, SetStateAction, useState } from 'react';
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
 
 import { axiosInstance } from '../../../axiosInstance';
 import { queryKeys } from '../../../react-query/constants';
+import { queryClient } from '../../../react-query/queryClient';
 import { useUser } from '../../user/hooks/useUser';
 import { AppointmentDateMap } from '../types';
 import { getAvailableAppointments } from '../utils';
@@ -14,6 +16,7 @@ async function getAppointments(
   year: string,
   month: string,
 ): Promise<AppointmentDateMap> {
+  await new Promise((r) => setTimeout(r, 2000));
   const { data } = await axiosInstance.get(`/appointments/${year}/${month}`);
   return data;
 }
@@ -60,19 +63,18 @@ export function useAppointments(): UseAppointments {
   const { user } = useUser();
 
   /** ****************** END 2: filter appointments  ******************** */
-  /** ****************** START 3: useQuery  ***************************** */
-  // useQuery call for appointments for the current monthYear
 
-  // TODO: update with useQuery!
-  // Notes:
-  //    1. appointments is an AppointmentDateMap (object with days of month
-  //       as properties, and arrays of appointments for that day as values)
-  //
-  //    2. The getAppointments query function needs monthYear.year and
-  //       monthYear.month
-  const appointments = {};
+  const { data: appointments = {} } = useQuery(
+    [queryKeys.appointments, monthYear.year, monthYear.month],
+    () => getAppointments(monthYear.year, monthYear.month),
+  );
 
-  /** ****************** END 3: useQuery  ******************************* */
+  useEffect(() => {
+    const { year, month } = getNewMonthYear(monthYear, 1);
+    queryClient.prefetchQuery([queryKeys.appointments, year, month], () =>
+      getAppointments(year, month),
+    );
+  }, [monthYear]);
 
   return { appointments, monthYear, updateMonthYear, showAll, setShowAll };
 }

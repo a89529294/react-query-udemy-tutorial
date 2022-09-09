@@ -7,7 +7,7 @@ import { queryKeys } from '../../../react-query/constants';
 import { filterByTreatment } from '../utils';
 
 async function getStaff(): Promise<Staff[]> {
-  await new Promise((r) => setTimeout(r, 2000));
+  //   await new Promise((r) => setTimeout(r, 2000));
   const { data } = await axiosInstance.get('/staff');
   return data;
 }
