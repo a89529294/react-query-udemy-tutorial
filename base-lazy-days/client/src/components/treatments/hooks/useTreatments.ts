@@ -7,7 +7,7 @@ import { queryKeys } from '../../../react-query/constants';
 const fallback = [];
 
 export async function getTreatments(): Promise<Treatment[]> {
-  await new Promise((r) => setTimeout(r, 2000));
+  //   await new Promise((r) => setTimeout(r, 2000));
   const { data } = await axiosInstance.get('/treatments');
   return data;
 }

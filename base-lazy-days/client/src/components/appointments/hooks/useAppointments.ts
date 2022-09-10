@@ -1,6 +1,12 @@
 // @ts-nocheck
 import dayjs from 'dayjs';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import { useQuery } from 'react-query';
 
 import { axiosInstance } from '../../../axiosInstance';
@@ -16,7 +22,7 @@ async function getAppointments(
   year: string,
   month: string,
 ): Promise<AppointmentDateMap> {
-  await new Promise((r) => setTimeout(r, 2000));
+  //   await new Promise((r) => setTimeout(r, 200));
   const { data } = await axiosInstance.get(`/appointments/${year}/${month}`);
   return data;
 }
@@ -29,6 +35,11 @@ interface UseAppointments {
   showAll: boolean;
   setShowAll: Dispatch<SetStateAction<boolean>>;
 }
+
+const commonOptions = {
+  staleTime: 0,
+  cacheTime: 1000 * 60 * 5,
+};
 
 // The purpose of this hook:
 //   1. track the current month/year (aka monthYear) selected by the user
@@ -62,17 +73,39 @@ export function useAppointments(): UseAppointments {
   //   appointments that the logged-in user has reserved (in white)
   const { user } = useUser();
 
+  const selectFn = useCallback(
+    (data: AppointmentDateMap) => getAvailableAppointments(data, user),
+    [user],
+  );
+
+  const identity = useCallback((d) => d, []);
+
+  //   const selectFn = (data: AppointmentDateMap) => {
+  //     console.log(data);
+  //     return getAvailableAppointments(data, user);
+  //   };
+
   /** ****************** END 2: filter appointments  ******************** */
 
   const { data: appointments = {} } = useQuery(
     [queryKeys.appointments, monthYear.year, monthYear.month],
     () => getAppointments(monthYear.year, monthYear.month),
+    {
+      select: showAll ? identity : selectFn,
+      ...commonOptions,
+      refetchOnMount: true,
+      refetchOnReconnect: true,
+      refetchOnWindowFocus: true,
+      refetchInterval: 1000 * 60,
+    },
   );
 
   useEffect(() => {
     const { year, month } = getNewMonthYear(monthYear, 1);
-    queryClient.prefetchQuery([queryKeys.appointments, year, month], () =>
-      getAppointments(year, month),
+    queryClient.prefetchQuery(
+      [queryKeys.appointments, year, month],
+      () => getAppointments(year, month),
+      commonOptions,
     );
   }, [monthYear]);
 
