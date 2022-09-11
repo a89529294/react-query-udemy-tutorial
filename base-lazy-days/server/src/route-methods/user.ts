@@ -9,7 +9,6 @@ function removePasswordandAddToken(user: AuthUser): User {
   // use "object rest operator" to remove properties in a typescript-friendly way
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { salt, keylen, iterations, hash, digest, ...cleanUser } = user;
-
   // create token
   const token = createJWT(cleanUser);
 
